@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦞 Lobster Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ── Design Tokens (67Lab.ai Deep Slate Glassmorphism) ────────── */
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --surface-1: rgba(17, 24, 39, 0.6);
+            --surface-2: rgba(30, 41, 59, 0.5);
+            --surface-glass: rgba(255, 255, 255, 0.05);
+            --border-default: rgba(255, 255, 255, 0.08);
+            --border-glow: rgba(99, 102, 241, 0.3);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-primary: #6366f1;
+            --accent-success: #22c55e;
+            --accent-danger: #ef4444;
+            --accent-warning: #f59e0b;
+            --gradient-brand: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        /* ── Header ──────────────────────────────────────────────────── */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: var(--gradient-brand);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        .header p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .version-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            background: var(--surface-glass);
+            border: 1px solid var(--border-default);
+            border-radius: 999px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        /* ── Glass Card ──────────────────────────────────────────────── */
+        .card {
+            background: var(--surface-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-default);
+            border-radius: 16px;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 480px;
+            margin-bottom: 1.5rem;
+            transition: border-color 0.3s ease;
+        }
+        .card:hover {
+            border-color: var(--border-glow);
+        }
+        .card-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        /* ── Health Meter ────────────────────────────────────────────── */
+        .health-meter {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .health-dot {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        .health-dot.healthy {
+            background: radial-gradient(circle, var(--accent-success), #16a34a);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+        }
+        .health-dot.unhealthy {
+            background: radial-gradient(circle, var(--accent-danger), #dc2626);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+        }
+        .health-dot.unknown {
+            background: radial-gradient(circle, var(--accent-warning), #d97706);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        .health-text h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        .health-text p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* ── Stats Grid ──────────────────────────────────────────────── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .stat-item {
+            background: var(--surface-2);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* ── Quick Actions ───────────────────────────────────────────── */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 1rem;
+            background: var(--surface-2);
+            border: 1px solid var(--border-default);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .action-btn:hover {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+        }
+        .action-btn .icon {
+            font-size: 1.4rem;
+        }
+
+        /* ── Footer ──────────────────────────────────────────────────── */
+        .footer {
+            margin-top: auto;
+            padding-top: 2rem;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .footer a {
+            color: var(--accent-primary);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>🦞 Lobster Command Center</h1>
+        <p>OpenClaw Elite Wrapper — Status Dashboard</p>
+        <span class="version-badge">v1.0.0 · powered by 67Lab.ai</span>
+    </div>
+
+    <!-- Health Meter Card -->
+    <div class="card">
+        <div class="card-title">System Health</div>
+        <div class="health-meter">
+            <div class="health-dot healthy" id="healthDot"></div>
+            <div class="health-text">
+                <h2 id="healthStatus">All Systems Operational</h2>
+                <p id="healthDetail">Last checked: just now</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Card -->
+    <div class="card">
+        <div class="card-title">Resource Usage</div>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="cpuUsage">—</div>
+                <div class="stat-label">CPU Usage</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="memUsage">—</div>
+                <div class="stat-label">Memory</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="budgetUsed">$0.00</div>
+                <div class="stat-label">Today's Spend</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="budgetLimit">$5.00</div>
+                <div class="stat-label">Daily Limit</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions Card -->
+    <div class="card">
+        <div class="card-title">Quick Actions</div>
+        <div class="actions-grid">
+            <button class="action-btn" onclick="runAction('patch')">
+                <span class="icon">🛡️</span>
+                Fix Vulnerabilities
+            </button>
+            <button class="action-btn" onclick="runAction('reset')">
+                <span class="icon">🔄</span>
+                Emergency Reboot
+            </button>
+            <button class="action-btn" onclick="runAction('logs')">
+                <span class="icon">📜</span>
+                View Logs
+            </button>
+            <button class="action-btn" onclick="runAction('stop')">
+                <span class="icon">🛑</span>
+                Stop Lobster
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>OpenClaw Elite Wrapper by <a href="https://67lab.ai" target="_blank">67Lab.ai</a></p>
+        <p>Join the community: <a href="https://discord.gg/BUnQYZpnxv" target="_blank">ClawNexus Discord</a></p>
+    </div>
+
+    <script>
+        // ── Placeholder interactivity ──────────────────────────────────
+        // In production, this would call a local API endpoint
+        // (e.g., /api/status) served by a lightweight backend.
+
+        function runAction(action) {
+            const btn = event.target.closest('.action-btn');
+            btn.style.opacity = '0.5';
+            btn.style.pointerEvents = 'none';
+
+            // Simulate action feedback
+            setTimeout(() => {
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+                alert(`✅ Action "${action}" executed successfully.`);
+            }, 1500);
+        }
+
+        // Auto-refresh health status every 30s
+        function updateHealth() {
+            const dot = document.getElementById('healthDot');
+            const status = document.getElementById('healthStatus');
+            const detail = document.getElementById('healthDetail');
+            const now = new Date().toLocaleTimeString();
+            detail.textContent = `Last checked: ${now}`;
+        }
+
+        setInterval(updateHealth, 30000);
+        updateHealth();
+    </script>
+</body>
+</html>

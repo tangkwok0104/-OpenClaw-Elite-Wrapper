@@ -1,0 +1,124 @@
+# ============================================================================
+#  OpenClaw Elite Wrapper — Docker Compose (The "Cage")
+#  By 67Lab.ai | Hardened, Non-Root, Resource-Limited
+# ============================================================================
+#
+#  Usage:
+#    docker compose --env-file .env up -d
+#
+#  This file is auto-configured by setup.sh. Manual edits are safe but
+#  will be overwritten if setup.sh is re-run.
+# ============================================================================
+
+services:
+  # ── The OpenClaw Agent (The "Lobster") ────────────────────────────────────
+  openclaw:
+    image: openclaw/openclaw:latest
+    container_name: elite-lobster
+    restart: unless-stopped
+    user: "1000:1000"   # 🔒 NON-ROOT: The Cage. Cannot touch host files.
+
+    # -- Resource Limits (Prevent Token Burn Loops) --
+    mem_limit: ${MEMORY_LIMIT:-2g}
+    cpus: ${CPU_LIMIT:-2.0}
+    pids_limit: 256                 # Prevent fork bombs
+
+    # -- Networking --
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:8080:8080"    # OpenClaw Web UI (VPS: localhost only)
+
+    # -- Persistent Storage --
+    volumes:
+      - ./data/memory:/app/memory           # AI memory survives restarts
+      - ./data/skills:/app/skills           # Custom skill .md files
+      - ./openclaw.json5:/app/config.json5:ro  # Read-only config injection
+      - ./souls:/app/souls:ro               # Soul templates (read-only)
+
+    # -- Environment --
+    env_file:
+      - .env
+
+    environment:
+      - NODE_ENV=production
+      - OPENCLAW_CONFIG=/app/config.json5
+
+    # -- Security Hardening --
+    security_opt:
+      - no-new-privileges:true    # Cannot escalate privileges
+    read_only: false               # Required for Chrome temp files
+    tmpfs:
+      - /tmp:size=512m             # Chrome temp data in RAM (auto-cleaned)
+      - /run:size=64m
+
+    # -- Health Check (Used by Watchdog) --
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    # -- Logging Limits (Prevent disk fill) --
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ── The Watchdog (SingletonLock Killer + Auto-Restart) ───────────────────
+  watchdog:
+    image: alpine:3.19
+    container_name: elite-watchdog
+    restart: unless-stopped
+    user: "1000:1000"
+
+    volumes:
+      - ./data/memory:/watch/memory
+      - ./watchdog.sh:/watch/watchdog.sh:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # Needed to restart containers
+
+    entrypoint: ["/bin/sh", "/watch/watchdog.sh"]
+
+    mem_limit: 64m
+    cpus: 0.25
+    pids_limit: 32
+
+    depends_on:
+      - openclaw
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # ── LCC Dashboard (The "Command Center" Web UI) ─────────────────────────
+  lcc-dashboard:
+    image: nginx:alpine
+    container_name: elite-lcc
+    restart: unless-stopped
+    user: "101:101"   # nginx user
+
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${LCC_PORT:-18789}:80"
+
+    volumes:
+      - ./lcc_dashboard:/usr/share/nginx/html:ro
+
+    mem_limit: 64m
+    cpus: 0.25
+    pids_limit: 32
+
+    depends_on:
+      - openclaw
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+# ── Named Volumes (Data Persistence) ──────────────────────────────────────
+volumes:
+  memory-data:
+  skills-data:
